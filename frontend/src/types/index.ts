@@ -102,8 +102,8 @@ export const TRACE_PHASE_MAP: Record<string, TracePhase> = {
   "llm.request": "act",
   "agent.observe": "observe",
   "llm.response_complete": "observe",
-  "context.loaded": "observe",
-  "db.query": "observe",
+  "context.loaded": "act",
+  "db.query": "act",
   "sse.text_complete": "output",
   "sse.error": "output",
 };

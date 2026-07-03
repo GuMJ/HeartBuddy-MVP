@@ -9,7 +9,7 @@ import type { SSEEvent } from "../types";
 
 export interface SSECallbacks {
   onTextChunk: (content: string) => void;
-  onTextComplete: (fullText: string) => void;
+  onTextComplete: (fullText: string, extra?: Record<string, unknown>) => void;
   onError: (error: string) => void;
 }
 
@@ -75,7 +75,7 @@ export function useSSE() {
               callbacks.onTextChunk(parsed.data.content);
               break;
             case "sse.text_complete":
-              callbacks.onTextComplete(parsed.data.full_text);
+              callbacks.onTextComplete(parsed.data.full_text, parsed.data as unknown as Record<string, unknown>);
               break;
             case "sse.error":
               callbacks.onError(parsed.data.message);

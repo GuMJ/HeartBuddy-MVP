@@ -12,6 +12,7 @@ export function useChat(sessionId: Ref<string>) {
   const messages = ref<ChatMessage[]>([]);
   const isLoading = ref(false);
   const currentStreaming = ref("");
+  const currentEmotion = ref("neutral");
   const error = ref("");
 
   const { isStreaming, connect: connectSSE, disconnect } = useSSE();
@@ -19,7 +20,6 @@ export function useChat(sessionId: Ref<string>) {
   async function send(text: string): Promise<void> {
     if (!text.trim() || isLoading.value) return;
 
-    // 添加用户消息
     messages.value.push({ role: "user", content: text });
     error.value = "";
     isLoading.value = true;
@@ -29,10 +29,13 @@ export function useChat(sessionId: Ref<string>) {
       onTextChunk(chunk: string) {
         currentStreaming.value += chunk;
       },
-      onTextComplete(fullText: string) {
+      onTextComplete(fullText: string, extra?: Record<string, unknown>) {
         messages.value.push({ role: "assistant", content: fullText });
         currentStreaming.value = "";
         isLoading.value = false;
+        if (extra?.emotion) {
+          currentEmotion.value = extra.emotion as string;
+        }
       },
       onError(err: string) {
         error.value = err;
@@ -45,6 +48,7 @@ export function useChat(sessionId: Ref<string>) {
   function clearMessages() {
     messages.value = [];
     currentStreaming.value = "";
+    currentEmotion.value = "neutral";
     error.value = "";
     isLoading.value = false;
   }
@@ -53,6 +57,7 @@ export function useChat(sessionId: Ref<string>) {
     messages,
     isLoading,
     currentStreaming,
+    currentEmotion,
     error,
     send,
     clearMessages,

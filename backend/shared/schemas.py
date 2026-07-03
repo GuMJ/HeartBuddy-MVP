@@ -43,6 +43,7 @@ class RouteDecision(BaseModel):
     matched_keywords: list[str] = Field(default_factory=list)
     confidence: float = 0.0
     reason: str = "v1.0_fallback"
+    suggest_workflow: bool = False
 
 
 # ============================================================

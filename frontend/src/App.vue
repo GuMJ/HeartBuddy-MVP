@@ -27,6 +27,7 @@ const {
   messages,
   isLoading,
   currentStreaming,
+  currentEmotion,
   error,
   send,
 } = useChat(sessionId);

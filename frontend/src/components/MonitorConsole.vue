@@ -102,8 +102,17 @@ const displayLines = computed<LineItem[]>(() => {
     if (t.type === "agent.perceive") {
       turnIndex++;
       const msg = (t.data.user_message as string) || "";
-      lines.push({ type: "divider", content: `#${turnIndex}  ${msg}` });
+      const em = (t.data.emotion as string) || "";
+      const cf = t.data.confidence as number;
+      const mood = em && em !== "neutral"
+        ? `  · ${em} ${(cf || 0).toFixed(2)}`
+        : "";
+      lines.push({ type: "divider", content: `#${turnIndex}  ${msg}${mood}` });
+      continue;  // 情绪已嵌入分隔线，不单独显示
     }
+
+    // 跳过独立情绪行（已整合到分隔线）
+    if (t.type === "emotion.detected") continue;
 
     // 思考块缩进渲染
     if (t.type === "agent.think.chunk") {
@@ -117,6 +126,13 @@ const displayLines = computed<LineItem[]>(() => {
 });
 
 // ---- 摘要生成 ----
+function formatPlanSummary(d: Record<string, unknown>): string {
+  const approach = (d.approach as string) || "";
+  const sources = d.sources as string[] | undefined;
+  if (!sources || sources.length === 0) return approach;
+  return approach + "\n" + sources.map((s) => "  · " + s).join("\n");
+}
+
 function formatSummary(trace: TraceEvent): string {
   const d = trace.data;
   switch (trace.type) {
@@ -131,7 +147,7 @@ function formatSummary(trace: TraceEvent): string {
     case "agent.active":
       return `${d.agent_name}  ${d.reason}`;
     case "agent.plan":
-      return (d.approach as string) || "";
+      return formatPlanSummary(d);
     case "agent.action":
       return (d.detail as string) || "";
     case "llm.request":
@@ -149,7 +165,7 @@ function formatSummary(trace: TraceEvent): string {
     case "agent.think.complete":
       return `${d.total_chunks}步  ${d.duration_ms}ms`;
     case "sse.text_complete":
-      return (d.full_text as string)?.slice(0, 100) || "";
+      return (d.full_text as string) || "";
     case "sse.error":
       return `${d.error}: ${d.message}`;
     case "session.created":
@@ -157,7 +173,7 @@ function formatSummary(trace: TraceEvent): string {
     case "session.ended":
       return `持续 ${(d.duration_seconds as number)?.toFixed(0)}s`;
     default:
-      return JSON.stringify(d).slice(0, 60);
+      return JSON.stringify(d);
   }
 }
 
@@ -348,6 +364,7 @@ watch(() => displayLines.value.length, async () => {
   word-break: break-word;
   flex: 1;
   min-width: 0;
+  white-space: pre-line;
 }
 .monitor__line.error {
   color: #f85149;

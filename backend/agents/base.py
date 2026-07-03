@@ -31,15 +31,17 @@ class BaseAgent(ABC):
         context: list[dict],
         session_id: str,
         broker: TraceBroker,
+        **kwargs,
     ) -> AsyncIterator[str]:
         """
         处理用户消息，流式产出回复文本。
 
         Args:
             message: 用户最新消息
-            context: 历史消息列表 [{"role": "user"/"assistant", "content": "..."}]
+            context: 历史消息列表
             session_id: 会话 ID
-            broker: TraceBroker 实例，用于推送 trace 事件
+            broker: TraceBroker 实例
+            **kwargs: 扩展参数（emotion, suggest_workflow 等）
 
         Yields:
             str: 回复文本的每个增量片段

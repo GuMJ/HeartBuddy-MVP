@@ -74,5 +74,59 @@ class LLMClient:
                 yield ("content", delta.content)
 
 
+    # ---- Function Calling：Agent 自主选择技能 ----
+
+    async def select_skills(self, user_message: str, emotion: str,
+                             confidence: float, available: list[dict]) -> list[str]:
+        """Agent 用 Function Call 选择需要哪些技能"""
+        if not available:
+            return []
+
+        props = {}
+        for s in available:
+            props[s["name"]] = {
+                "type": "boolean",
+                "description": s["description"],
+            }
+
+        tools = [{
+            "type": "function",
+            "function": {
+                "name": "select_skills",
+                "description": (
+                    f"用户消息：{user_message}\n"
+                    f"预检测情绪：{emotion}，程度：{confidence:.2f}/1.0\n"
+                    f"请根据情绪类型和程度，选择需要的技能。程度低时可以不选。"
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": props,
+                    "required": [],
+                },
+            },
+        }]
+
+        response = await self.client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[{
+                "role": "user",
+                "content": f"用户：{user_message}",
+            }],
+            tools=tools,
+            tool_choice={"type": "function", "function": {"name": "select_skills"}},
+            temperature=0.1,
+            max_tokens=100,
+        )
+
+        msg = response.choices[0].message
+        if msg.tool_calls:
+            import json
+            args = json.loads(msg.tool_calls[0].function.arguments)
+            return [name for name, selected in args.items() if selected]
+
+        return []
+
+
 # 模块级单例
 llm_client = LLMClient()
+

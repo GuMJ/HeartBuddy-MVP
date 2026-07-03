@@ -1,10 +1,11 @@
-"""CompanionAgent — 闲聊共情陪伴"""
+"""CompanionAgent — 闲聊共情陪伴（V1.1 Skills 系统）"""
 
 import time
-from typing import AsyncIterator
+from typing import AsyncIterator, Optional
 from backend.agents.base import BaseAgent
 from backend.harness.trace_broker import TraceBroker
 from backend.services.llm_client import llm_client
+from backend.services.skill_manager import skill_manager
 
 SENTENCE_END = {"。", "！", "？", "\n"}
 THINK_FLUSH_SIZE = 60
@@ -15,17 +16,25 @@ class CompanionAgent(BaseAgent):
 
     agent_name = "companion"
 
-    PROMPT = (
-        "你是 HeartBuddy，一个温暖、善解人意的 AI 情感陪伴伙伴。\n\n"
-        "对话原则：\n"
-        "1. 用 2-4 句话回复，语气自然，像朋友在聊天。\n"
-        "2. 先共情，再回应。不否定用户的感受，不随意给建议。\n"
-        "3. 如果用户表达了负面情绪，先接纳（\"听起来你最近确实挺难的…\"），不急于解决。\n"
-        "4. 保持好奇和开放，引导用户多说一点，但不过度追问。\n"
-        "5. 可以适当使用 emoji 增加亲和力，但不过度使用（每条消息最多 1-2 个）。\n"
-        "6. 避免说教、鸡汤和空洞的安慰（\"一切都会好起来的\"）。\n"
-        "7. 你不是心理咨询师，如果用户表现出严重心理健康问题，建议寻求专业帮助。"
-    )
+    def build_prompt(self, selected_skills: list[str], emotion: str = "neutral",
+                      confidence: float = 0.0, suggest_workflow: bool = False) -> str:
+        """根据 Agent 自主选择的技能拼装系统提示"""
+        base = skill_manager.load(selected_skills)
+
+        # 情绪预检测结果（供 LLM 参考，可自行矫正）
+        if emotion != "neutral":
+            base += (
+                f"\n\n## 情绪预检测\n"
+                f"系统预判用户情绪为 {emotion}（程度 {confidence:.2f}/1.0）。"
+                f"这只是参考，你可以根据对话内容自行矫正。\n"
+            )
+
+        if suggest_workflow and emotion == "anxious":
+            base += (
+                "\n【重要】本次回复末尾，请自然地说一句话引导用户尝试情绪急救工具。"
+                "必须是自然的、不强迫的，像朋友推荐好用的东西一样。"
+            )
+        return base
 
     async def process(
         self,
@@ -33,8 +42,15 @@ class CompanionAgent(BaseAgent):
         context: list[dict],
         session_id: str,
         broker: TraceBroker,
+        selected_skills: Optional[list[str]] = None,
+        emotion: str = "neutral",
+        confidence: float = 0.0,
+        suggest_workflow: bool = False,
     ) -> AsyncIterator[str]:
-        messages = [{"role": "system", "content": self.PROMPT}]
+        if selected_skills is None:
+            selected_skills = ["核心人格"]
+        system_prompt = self.build_prompt(selected_skills, emotion, confidence, suggest_workflow)
+        messages = [{"role": "system", "content": system_prompt}]
         messages.extend(context)
         messages.append({"role": "user", "content": message})
 
@@ -70,8 +86,7 @@ class CompanionAgent(BaseAgent):
                         think_duration_ms = (time.time() - start_time) * 1000
                         await broker.trace("agent.think.complete", session_id,
                                            total_chunks=think_idx,
-                                           duration_ms=round(think_duration_ms, 1),
-                                           preview="")
+                                           duration_ms=round(think_duration_ms, 1))
                         is_thinking = False
                         think_buffer = ""
 
