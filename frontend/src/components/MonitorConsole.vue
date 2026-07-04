@@ -102,13 +102,8 @@ const displayLines = computed<LineItem[]>(() => {
     if (t.type === "agent.perceive") {
       turnIndex++;
       const msg = (t.data.user_message as string) || "";
-      const em = (t.data.emotion as string) || "";
-      const cf = t.data.confidence as number;
-      const mood = em && em !== "neutral"
-        ? `  · ${em} ${(cf || 0).toFixed(2)}`
-        : "";
-      lines.push({ type: "divider", content: `#${turnIndex}  ${msg}${mood}` });
-      continue;  // 情绪已嵌入分隔线，不单独显示
+      lines.push({ type: "divider", content: `#${turnIndex}  ${msg}` });
+      continue;  // 情绪信息在 agent.plan 中展示
     }
 
     // 跳过独立情绪行（已整合到分隔线）
@@ -126,11 +121,24 @@ const displayLines = computed<LineItem[]>(() => {
 });
 
 // ---- 摘要生成 ----
-function formatPlanSummary(d: Record<string, unknown>): string {
-  const approach = (d.approach as string) || "";
-  const sources = d.sources as string[] | undefined;
-  if (!sources || sources.length === 0) return approach;
-  return approach + "\n" + sources.map((s) => "  · " + s).join("\n");
+function formatPlan(d: Record<string, unknown>): string {
+  const emotion = (d.emotion as string) || "neutral";
+  const confidence = d.confidence as number;
+  const skills = d.skills as string[] | undefined;
+  const lines: string[] = [];
+  if (emotion !== "neutral") {
+    lines.push(`emotion (${emotion} ${(confidence || 0).toFixed(2)})`);
+  }
+  if (skills && skills.length > 0) {
+    lines.push(`skills (${skills.join(", ")})`);
+  }
+  return lines.join("\n");
+}
+
+function formatContext(d: Record<string, unknown>): string {
+  const h = d.history as number ?? 0;
+  const t = d.total as number ?? h + 1;
+  return `context history (${h}) new (${t - h})`;
 }
 
 function formatSummary(trace: TraceEvent): string {
@@ -147,17 +155,13 @@ function formatSummary(trace: TraceEvent): string {
     case "agent.active":
       return `${d.agent_name}  ${d.reason}`;
     case "agent.plan":
-      return formatPlanSummary(d);
-    case "agent.action":
-      return (d.detail as string) || "";
+      return formatPlan(d);
     case "llm.request":
-      return `${d.model}  ${(d.messages as unknown[])?.length ?? 0}条消息`;
-    case "agent.observe":
-      return (d.summary as string) || "";
+      return `${d.model}`;
     case "llm.response_complete":
-      return `${d.total_chunks}chunks  ${d.duration_ms}ms  ${d.finish_reason}`;
+      return `${d.total_chunks}chunks  ${d.duration_ms}ms`;
     case "context.loaded":
-      return `${d.message_count}条  ~${d.total_tokens_estimate}tokens`;
+      return formatContext(d);
     case "db.query":
       return `${d.query_type}  ${d.result_count}条`;
     case "agent.think.start":

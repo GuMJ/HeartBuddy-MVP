@@ -1,6 +1,6 @@
 # HeartBuddy · 心灵伙伴
 
-AI 情感陪伴机器人 — MVP V1.1 自主Agent。
+AI 情感陪伴机器人 — MVP V1.0 基础框架。
 
 一个能陪用户闲聊 + 实时监控 AI 思考轨迹的 Web 聊天工具。
 
@@ -124,23 +124,16 @@ HeartBuddy MVP/
 | `plan.match` | 方案匹配 | 🔜 V1.2 |
 | `tool.call/result` | 工具调用 | 🔜 V1.2 |
 
-## V1.1 新增功能
-
-- **LLM 情绪识别**：deepseek-chat 分类 + 关键词降级，支持 anxious/sad/angry/happy/neutral
-- **Skills 系统**：skills/ 目录丢 .md 即可扩展，YAML frontmatter 声明，Function Call 选技能
-- **动态人设**：SOUL.md（核心人格）+ emotion-guide.md（情绪策略）按需加载
-- **自然引导**：检测到焦虑情绪后自然提议情绪急救工具
-
 ## V1.0 → V1.1 → V1.2 扩展路径
 
 | 扩展点 | V1.0 | V1.1 | V1.2 |
 |--------|------|------|------|
-| `RouteEngine.decide()` | 固定 companion | 情绪 + 引导决策 | 完整上下文路由 |
-| `CompanionAgent` | 基础共情 + 关键词情绪 | LLM 情绪识别 + Skills 动态人设 | 长期记忆人设 |
-| `WorkflowAgent` | 占位 | —（已移除） | 完整状态机 + 5 方案 |
+| `RouteEngine.decide()` | 固定 companion | 情绪 + 意图路由 | 完整上下文路由 |
+| `CompanionAgent` | 基础共情 + 关键词情绪 | LLM 情绪识别 | 动态人设 |
+| `WorkflowAgent` | 占位 | 引导话术 | 完整状态机 + 5 方案 |
 | `emotion.detected` | 关键词记录 | LLM 识别参与路由 | 细粒度情绪 |
-| Skills 系统 | — | skills/ 目录 + Function Call | 热加载 + 更多技能 |
-| 会话 | 单表 SQLite | 单表 SQLite | 增加 user 表 |
+| TraceBroker | 全局广播 | 按 session 分区 | 持久化回放 |
+| 会话 | 单表 SQLite | 增加 user 表 | 长期记忆 |
 
 ## API 概要
 
@@ -169,7 +162,7 @@ WebSocket 实时推送 `TraceEvent` JSON。
 
 | 版本 | 内容 | 状态 |
 |------|------|------|
-| V1.0 | 基础框架：Web 前端 + 后端 API + LLM 接入 + 监控台 | ✅ 完成 |
-| V1.1 | 自主Agent：人设 + 闲聊 + 情绪识别 + 自然引导逻辑 | ✅ 当前 |
+| V1.0 | 基础框架：Web 前端 + 后端 API + LLM 接入 + 监控台 | ✅ 当前 |
+| V1.1 | 自主Agent：人设 + 闲聊 + 情绪识别 + 自然引导逻辑 | 🔜 |
 | V1.2 | 工作流Agent：缓解紧张完整闭环 + 路由引擎 | 🔜 |
 | V1.3 | 整合与测试：端到端 | 🔜 |

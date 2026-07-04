@@ -17,7 +17,7 @@ class CompanionAgent(BaseAgent):
     agent_name = "companion"
 
     def build_prompt(self, selected_skills: list[str], emotion: str = "neutral",
-                      confidence: float = 0.0, suggest_workflow: bool = False) -> str:
+                      confidence: float = 0.0) -> str:
         """根据 Agent 自主选择的技能拼装系统提示"""
         base = skill_manager.load(selected_skills)
 
@@ -27,12 +27,6 @@ class CompanionAgent(BaseAgent):
                 f"\n\n## 情绪预检测\n"
                 f"系统预判用户情绪为 {emotion}（程度 {confidence:.2f}/1.0）。"
                 f"这只是参考，你可以根据对话内容自行矫正。\n"
-            )
-
-        if suggest_workflow and emotion == "anxious":
-            base += (
-                "\n【重要】本次回复末尾，请自然地说一句话引导用户尝试情绪急救工具。"
-                "必须是自然的、不强迫的，像朋友推荐好用的东西一样。"
             )
         return base
 
@@ -45,11 +39,10 @@ class CompanionAgent(BaseAgent):
         selected_skills: Optional[list[str]] = None,
         emotion: str = "neutral",
         confidence: float = 0.0,
-        suggest_workflow: bool = False,
     ) -> AsyncIterator[str]:
         if selected_skills is None:
             selected_skills = ["核心人格"]
-        system_prompt = self.build_prompt(selected_skills, emotion, confidence, suggest_workflow)
+        system_prompt = self.build_prompt(selected_skills, emotion, confidence)
         messages = [{"role": "system", "content": system_prompt}]
         messages.extend(context)
         messages.append({"role": "user", "content": message})

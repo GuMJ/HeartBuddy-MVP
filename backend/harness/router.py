@@ -22,15 +22,11 @@ class RouteEngine:
     ) -> RouteDecision:
         """根据情绪和上下文做路由决策"""
         matched = [kw for kw in self.WORKFLOW_KEYWORDS if kw in message]
-
-        suggest = emotion == "anxious" and confidence > 0.6
-
         return RouteDecision(
             agent="companion",
             matched_keywords=matched,
             confidence=min(confidence, 1.0) if matched else 0.0,
-            reason="emotion_guided" if suggest else "keyword_matched" if matched else "v1.0_fallback",
-            suggest_workflow=suggest,
+            reason="keyword_matched" if matched else "v1.0_fallback",
         )
 
 route_engine = RouteEngine()
