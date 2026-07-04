@@ -68,22 +68,18 @@ HeartBuddy MVP/
 │   │   └── session.py           # SessionManager — 会话管理
 │   ├── agents/                  # Agent 执行层
 │   │   ├── base.py              # BaseAgent (ABC)
-│   │   └── companion.py         # CompanionAgent — 闲聊共情
+│   │   ├── companion.py         # CompanionAgent — 闲聊共情
+│   │   └── workflow.py          # WorkflowAgent — 缓解紧张（V1.2）
 │   ├── data/                    # 数据层
 │   │   ├── db.py + repository.py
-│   │   └── solutions.py         # 5 个缓解紧张方案（V1.2 使用）
+│   │   └── solutions.py         # 5 个缓解紧张方案
 │   ├── services/                # 外部服务
 │   │   ├── llm_client.py        # DeepSeek API
-│   │   ├── emotion_detector.py  # 情绪检测（LLM + 关键词降级）
-│   │   ├── skill_manager.py     # Skills 管理器
 │   │   └── logger.py            # JSON Lines 日志
 │   ├── api/                     # 端点
 │   │   ├── chat.py              # POST /api/chat (SSE)
 │   │   └── monitor.py           # WS /ws/monitor
 │   └── shared/schemas.py        # Pydantic 数据模型
-├── skills/                      # 知识技能文件
-│   ├── soul.md                  # 核心人格
-│   └── emotion-guide.md         # 情绪应对策略
 ├── frontend/
 │   └── src/
 │       ├── App.vue              # 双栏布局
@@ -92,7 +88,9 @@ HeartBuddy MVP/
 │       │   ├── ChatMessageList.vue  # 消息列表
 │       │   ├── ChatBubble.vue       # 聊天气泡
 │       │   ├── ChatInput.vue        # 输入框
-│       │   └── MonitorConsole.vue   # 监控面板（右栏）
+│       │   ├── MonitorConsole.vue   # 监控面板（右栏）
+│       │   ├── TraceCard.vue        # Trace 卡片
+│       │   └── TraceFilter.vue      # 类型筛选
 │       ├── composables/
 │       │   ├── useSSE.ts / useWebSocket.ts / useChat.ts
 │       └── types/index.ts          # TS 类型定义
@@ -113,7 +111,7 @@ HeartBuddy MVP/
 
 ### Trace 事件类型
 
-| 类型 | 说明 | V1.1 状态 |
+| 类型 | 说明 | V1.0 状态 |
 |------|------|----------|
 | `session.created/ended` | 会话生命周期 | ✅ 完整 |
 | `route.decision` | 路由决策 | ✅ 固定 companion |
@@ -126,16 +124,23 @@ HeartBuddy MVP/
 | `plan.match` | 方案匹配 | 🔜 V1.2 |
 | `tool.call/result` | 工具调用 | 🔜 V1.2 |
 
+## V1.1 新增功能
+
+- **LLM 情绪识别**：deepseek-chat 分类 + 关键词降级，支持 anxious/sad/angry/happy/neutral
+- **Skills 系统**：skills/ 目录丢 .md 即可扩展，YAML frontmatter 声明，Function Call 选技能
+- **动态人设**：SOUL.md（核心人格）+ emotion-guide.md（情绪策略）按需加载
+- **自然引导**：检测到焦虑情绪后自然提议情绪急救工具
+
 ## V1.0 → V1.1 → V1.2 扩展路径
 
 | 扩展点 | V1.0 | V1.1 | V1.2 |
 |--------|------|------|------|
-| `RouteEngine.decide()` | 固定 companion | 情绪 + 意图路由 | 完整上下文路由 |
-| `CompanionAgent` | 基础共情 + 关键词情绪 | LLM 情绪识别 | 动态人设 |
-| `WorkflowAgent` | 占位 | 引导话术 | 完整状态机 + 5 方案 |
+| `RouteEngine.decide()` | 固定 companion | 情绪 + 引导决策 | 完整上下文路由 |
+| `CompanionAgent` | 基础共情 + 关键词情绪 | LLM 情绪识别 + Skills 动态人设 | 长期记忆人设 |
+| `WorkflowAgent` | 占位 | —（已移除） | 完整状态机 + 5 方案 |
 | `emotion.detected` | 关键词记录 | LLM 识别参与路由 | 细粒度情绪 |
-| TraceBroker | 全局广播 | 按 session 分区 | 持久化回放 |
-| 会话 | 单表 SQLite | 增加 user 表 | 长期记忆 |
+| Skills 系统 | — | skills/ 目录 + Function Call | 热加载 + 更多技能 |
+| 会话 | 单表 SQLite | 单表 SQLite | 增加 user 表 |
 
 ## API 概要
 
