@@ -113,7 +113,7 @@ HeartBuddy MVP/
 
 ### Trace 事件类型
 
-| 类型 | 说明 | V1.0 状态 |
+| 类型 | 说明 | V1.1 状态 |
 |------|------|----------|
 | `session.created/ended` | 会话生命周期 | ✅ 完整 |
 | `route.decision` | 路由决策 | ✅ 固定 companion |
