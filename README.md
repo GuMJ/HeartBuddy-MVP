@@ -1,6 +1,6 @@
 # HeartBuddy · 心灵伙伴
 
-AI 情感陪伴机器人 — MVP V1.0 基础框架。
+AI 情感陪伴机器人 — MVP V1.1 自主Agent。
 
 一个能陪用户闲聊 + 实时监控 AI 思考轨迹的 Web 聊天工具。
 
@@ -68,18 +68,22 @@ HeartBuddy MVP/
 │   │   └── session.py           # SessionManager — 会话管理
 │   ├── agents/                  # Agent 执行层
 │   │   ├── base.py              # BaseAgent (ABC)
-│   │   ├── companion.py         # CompanionAgent — 闲聊共情
-│   │   └── workflow.py          # WorkflowAgent — 缓解紧张（V1.2）
+│   │   └── companion.py         # CompanionAgent — 闲聊共情
 │   ├── data/                    # 数据层
 │   │   ├── db.py + repository.py
-│   │   └── solutions.py         # 5 个缓解紧张方案
+│   │   └── solutions.py         # 5 个缓解紧张方案（V1.2 使用）
 │   ├── services/                # 外部服务
 │   │   ├── llm_client.py        # DeepSeek API
+│   │   ├── emotion_detector.py  # 情绪检测（LLM + 关键词降级）
+│   │   ├── skill_manager.py     # Skills 管理器
 │   │   └── logger.py            # JSON Lines 日志
 │   ├── api/                     # 端点
 │   │   ├── chat.py              # POST /api/chat (SSE)
 │   │   └── monitor.py           # WS /ws/monitor
 │   └── shared/schemas.py        # Pydantic 数据模型
+├── skills/                      # 知识技能文件
+│   ├── soul.md                  # 核心人格
+│   └── emotion-guide.md         # 情绪应对策略
 ├── frontend/
 │   └── src/
 │       ├── App.vue              # 双栏布局
@@ -88,9 +92,7 @@ HeartBuddy MVP/
 │       │   ├── ChatMessageList.vue  # 消息列表
 │       │   ├── ChatBubble.vue       # 聊天气泡
 │       │   ├── ChatInput.vue        # 输入框
-│       │   ├── MonitorConsole.vue   # 监控面板（右栏）
-│       │   ├── TraceCard.vue        # Trace 卡片
-│       │   └── TraceFilter.vue      # 类型筛选
+│       │   └── MonitorConsole.vue   # 监控面板（右栏）
 │       ├── composables/
 │       │   ├── useSSE.ts / useWebSocket.ts / useChat.ts
 │       └── types/index.ts          # TS 类型定义
@@ -111,7 +113,7 @@ HeartBuddy MVP/
 
 ### Trace 事件类型
 
-| 类型 | 说明 | V1.0 状态 |
+| 类型 | 说明 | V1.1 状态 |
 |------|------|----------|
 | `session.created/ended` | 会话生命周期 | ✅ 完整 |
 | `route.decision` | 路由决策 | ✅ 固定 companion |
@@ -162,7 +164,7 @@ WebSocket 实时推送 `TraceEvent` JSON。
 
 | 版本 | 内容 | 状态 |
 |------|------|------|
-| V1.0 | 基础框架：Web 前端 + 后端 API + LLM 接入 + 监控台 | ✅ 当前 |
-| V1.1 | 自主Agent：人设 + 闲聊 + 情绪识别 + 自然引导逻辑 | 🔜 |
+| V1.0 | 基础框架：Web 前端 + 后端 API + LLM 接入 + 监控台 | ✅ 完成 |
+| V1.1 | 自主Agent：人设 + 闲聊 + 情绪识别 + 自然引导逻辑 | ✅ 当前 |
 | V1.2 | 工作流Agent：缓解紧张完整闭环 + 路由引擎 | 🔜 |
 | V1.3 | 整合与测试：端到端 | 🔜 |
