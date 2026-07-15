@@ -1,8 +1,8 @@
 # HeartBuddy · 心灵伙伴
 
-AI 情感陪伴机器人 — MVP V1.1 自主Agent。
+AI 情感陪伴机器人 — MVP V1.2 工作流闭环。
 
-一个能陪用户闲聊 + 实时监控 AI 思考轨迹的 Web 聊天工具。
+一个能陪用户闲聊、执行结构化放松方案、实时监控 AI 决策链的 Web 聊天工具。
 
 ## 技术栈
 
@@ -68,7 +68,8 @@ HeartBuddy MVP/
 │   │   └── session.py           # SessionManager — 会话管理
 │   ├── agents/                  # Agent 执行层
 │   │   ├── base.py              # BaseAgent (ABC)
-│   │   └── companion.py         # CompanionAgent — 闲聊共情
+│   │   ├── companion.py         # CompanionAgent — 闲聊共情
+│   │   └── workflow.py          # WorkflowAgent — 5 方案完整状态机 (V1.2)
 │   ├── data/                    # 数据层
 │   │   ├── db.py + repository.py
 │   │   └── solutions.py         # 5 个缓解紧张方案（V1.2 使用）
@@ -122,9 +123,26 @@ HeartBuddy MVP/
 | `llm.request/response_chunk/response_complete` | LLM 交互全记录 | ✅ 完整 |
 | `context.loaded` | 上下文加载 | ✅ 完整 |
 | `sse.text_chunk/text_complete/error` | SSE 分发镜像 | ✅ 完整 |
-| `workflow.state_change` | 工作流状态机 | 🔜 V1.2 |
-| `plan.match` | 方案匹配 | 🔜 V1.2 |
-| `tool.call/result` | 工具调用 | 🔜 V1.2 |
+| `workflow.state_change` | 工作流状态机 | ✅ 完整 |
+| `workflow.intent_raw` | Agent判断原始输出 | ✅ 完整 |
+| `route.decision` | 路由决策 (LLM意图) | ✅ 完整 |
+| `plan.match` | 方案匹配 | ✅ 完整 |
+| `tool.call/result` | 工具调用 | 🔜 V1.3 |
+
+## V1.2 新增功能
+
+- **WorkflowAgent**：完整状态机（进入→信息采集→方案呈现→逐步执行→出口过渡→结束），5 套结构化方案
+  - 感官锚定法（6步）：五感观察，中断焦虑循环
+  - 情绪命名与抽屉法（4步）：情绪具象化，获得控制感
+  - 渐进式肌肉放松（8步）：依次收紧放松各肌群
+  - 感恩速记（4步，可循环）：记录感恩小事，切换注意力焦点
+  - 微型胜利法（3步）：极小行动打破无力感
+- **LLM 情绪 + 意图检测**：同时输出 emotion/action/method，router 按意图自动路由到 workflow
+- **意图检测重构**：感恩速记用语义提取（event/feeling/credit/done/more），线性方案用结构化输出（jump/current/quit/步骤序号）
+- **结构化事件追踪**：感恩速记按事件独立追踪感受和功劳，品味步生成个性化总结
+- **退出机制**：全局拒识（不想/不需要等），Q&A 任意阶段可退出
+- **智能步骤推进**：线性方案支持缺口查找（1,3,5→补4）、枚举步骤数量判断、中文顿号兼容
+- **控制台增强**：新增「判断」阶段（紫色），显示 LLM 意图检测原始输出
 
 ## V1.1 新增功能
 
@@ -172,6 +190,6 @@ WebSocket 实时推送 `TraceEvent` JSON。
 | 版本 | 内容 | 状态 |
 |------|------|------|
 | V1.0 | 基础框架：Web 前端 + 后端 API + LLM 接入 + 监控台 | ✅ 完成 |
-| V1.1 | 自主Agent：人设 + 闲聊 + 情绪识别 + 自然引导逻辑 | ✅ 当前 |
-| V1.2 | 工作流Agent：缓解紧张完整闭环 + 路由引擎 | 🔜 |
-| V1.3 | 整合与测试：端到端 | 🔜 |
+| V1.1 | 自主Agent：人设 + 闲聊 + 情绪识别 + 自然引导逻辑 | ✅ 完成 |
+| V1.2 | 工作流Agent：5方案闭环 + 意图检测重构 + 路由引擎 | ✅ 当前 |
+| V1.3 | 枚举步骤数量判断 + Prompt拆分 + 长期记忆 | 🔜 |
