@@ -114,18 +114,17 @@ HeartBuddy MVP/
 
 ### Trace 事件类型
 
-| 类型 | 说明 | V1.1 状态 |
-|------|------|----------|
+| 类型 | 说明 | 状态 |
+|------|------|------|
 | `session.created/ended` | 会话生命周期 | ✅ 完整 |
-| `route.decision` | 路由决策 | ✅ 固定 companion |
-| `emotion.detected` | 情绪检测 | ✅ 关键词，不参与路由 |
+| `route.decision` | 路由决策 (LLM意图) | ✅ 完整 |
+| `emotion.detected` | 情绪检测 (LLM + 关键词降级) | ✅ 完整 |
 | `agent.active` | Agent 激活 | ✅ 完整 |
 | `llm.request/response_chunk/response_complete` | LLM 交互全记录 | ✅ 完整 |
 | `context.loaded` | 上下文加载 | ✅ 完整 |
 | `sse.text_chunk/text_complete/error` | SSE 分发镜像 | ✅ 完整 |
 | `workflow.state_change` | 工作流状态机 | ✅ 完整 |
 | `workflow.intent_raw` | Agent判断原始输出 | ✅ 完整 |
-| `route.decision` | 路由决策 (LLM意图) | ✅ 完整 |
 | `plan.match` | 方案匹配 | ✅ 完整 |
 | `tool.call/result` | 工具调用 | 🔜 V1.3 |
 
@@ -155,12 +154,12 @@ HeartBuddy MVP/
 
 | 扩展点 | V1.0 | V1.1 | V1.2 |
 |--------|------|------|------|
-| `RouteEngine.decide()` | 固定 companion | 情绪 + 引导决策 | 完整上下文路由 |
-| `CompanionAgent` | 基础共情 + 关键词情绪 | LLM 情绪识别 + Skills 动态人设 | 长期记忆人设 |
+| `RouteEngine.decide()` | 固定 companion | 情绪 + 引导决策 | LLM 意图路由 (action/method) |
+| `CompanionAgent` | 基础共情 + 关键词情绪 | LLM 情绪识别 + Skills 动态人设 | LLM 情绪识别 + Skills 动态人设 |
 | `WorkflowAgent` | 占位 | —（已移除） | 完整状态机 + 5 方案 |
-| `emotion.detected` | 关键词记录 | LLM 识别参与路由 | 细粒度情绪 |
-| Skills 系统 | — | skills/ 目录 + 按情绪加载 | 自主选择 + 更多技能 |
-| 会话 | 单表 SQLite | 单表 SQLite | 增加 user 表 |
+| `emotion_detector` | 关键词记录 | LLM 情绪分类 | 情绪 + action/method 输出 |
+| Skills 系统 | — | skills/ 目录 + 按情绪加载 | skills/ 目录 + 按情绪加载 |
+| 会话 | 单表 SQLite | 单表 SQLite | 单表 SQLite |
 
 ## API 概要
 
@@ -192,4 +191,4 @@ WebSocket 实时推送 `TraceEvent` JSON。
 | V1.0 | 基础框架：Web 前端 + 后端 API + LLM 接入 + 监控台 | ✅ 完成 |
 | V1.1 | 自主Agent：人设 + 闲聊 + 情绪识别 + 自然引导逻辑 | ✅ 完成 |
 | V1.2 | 工作流Agent：5方案闭环 + 意图检测重构 + 路由引擎 | ✅ 当前 |
-| V1.3 | 枚举步骤数量判断 + Prompt拆分 + 长期记忆 | 🔜 |
+| V1.3 | 枚举步骤数量判断 + 线性 Prompt 拆分 + LLM 调用追踪 | 🔜 |
