@@ -48,6 +48,7 @@ export type TraceEventType =
   | "sse.error"
   // 工作流（V1.2）
   | "workflow.state_change"
+  | "workflow.intent_raw"
   | "plan.match"
   | "tool.call"
   | "tool.result"
@@ -87,7 +88,7 @@ export type SSEEvent =
   | { event: "sse.error"; data: SSEError };
 
 // ---- Trace 阶段分组 ----
-export type TracePhase = "perceive" | "think" | "decide" | "plan" | "act" | "observe" | "output";
+export type TracePhase = "perceive" | "think" | "decide" | "plan" | "act" | "observe" | "output" | "judge";
 
 export const TRACE_PHASE_MAP: Record<string, TracePhase> = {
   "agent.perceive": "perceive",
@@ -116,6 +117,7 @@ export const PHASE_LABELS: Record<TracePhase, { label: string; emoji: string; co
   act: { label: "行动", emoji: "⚡", color: "#f97316" },
   observe: { label: "观察", emoji: "🔍", color: "#10b981" },
   output: { label: "输出", emoji: "✅", color: "#16a34a" },
+  judge: { label: "判断", emoji: "🧠", color: "#8b5cf6" },
 };
 
 // ---- Trace 类型显示配置 ----
@@ -138,8 +140,9 @@ export const TRACE_TYPE_CONFIG: Record<string, { label: string; color: string; e
   "context.loaded": { label: "上下文加载", color: "#94a3b8", emoji: "📚" },
   "sse.text_complete": { label: "最终输出", color: "#16a34a", emoji: "✅" },
   "sse.error": { label: "错误", color: "#dc2626", emoji: "❌" },
-  "workflow.state_change": { label: "工作流状态", color: "#f59e0b", emoji: "🔄" },
-  "plan.match": { label: "方案匹配", color: "#10b981", emoji: "📋" },
+  "workflow.state_change": "act",
+  "workflow.intent_raw": "judge",
+  "plan.match": "plan",
   "tool.call": { label: "工具调用", color: "#f97316", emoji: "🔧" },
   "tool.result": { label: "工具结果", color: "#84cc16", emoji: "✅" },
   "sse.text_chunk": { label: "文本片段", color: "#ccc", emoji: "💬" },

@@ -17,7 +17,7 @@ export function useChat(sessionId: Ref<string>) {
 
   const { isStreaming, connect: connectSSE, disconnect } = useSSE();
 
-  async function send(text: string): Promise<void> {
+  async function send(text: string, entry: string = "chat"): Promise<void> {
     if (!text.trim() || isLoading.value) return;
 
     messages.value.push({ role: "user", content: text });
@@ -25,7 +25,7 @@ export function useChat(sessionId: Ref<string>) {
     isLoading.value = true;
     currentStreaming.value = "";
 
-    await connectSSE(sessionId.value, text, {
+    await connectSSE(sessionId.value, text, entry, {
       onTextChunk(chunk: string) {
         currentStreaming.value += chunk;
       },

@@ -1,6 +1,6 @@
 ---
 name: 情绪应对策略
-description: 面对 anxious/sad/angry/happy 情绪的回应方式
+description: 面对 anxious/sad/angry/happy 情绪的回应方式，当情绪程度 ≥ 0.8 时加载
 always: false
 ---
 

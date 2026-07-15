@@ -7,6 +7,7 @@ from backend.harness.router import route_engine
 from backend.harness.context import context_manager
 from backend.harness.session import session_manager
 from backend.agents.companion import CompanionAgent
+from backend.agents.workflow import WorkflowAgent
 from backend.services.llm_client import llm_client
 from backend.services.emotion_detector import emotion_detector
 from backend.services.skill_manager import skill_manager
@@ -15,10 +16,14 @@ from backend.services.skill_manager import skill_manager
 class ChatOrchestrator:
 
     def __init__(self):
-        self._agents = {"companion": CompanionAgent()}
+        self._agents = {
+            "companion": CompanionAgent(),
+            "workflow": WorkflowAgent(),
+        }
+        self._active_workflow: set[str] = set()  # 追踪会话是否在工作流中
 
     async def handle_chat(
-        self, session_id: str, user_message: str
+        self, session_id: str, user_message: str, entry: str = "chat"
     ) -> AsyncIterator[str]:
         broker = trace_broker
 
@@ -27,10 +32,13 @@ class ChatOrchestrator:
         await context_manager.add_message(session_id, "user", user_message)
         await session_manager.increment_message_count(session_id)
 
-        # 2. 感知：LLM 情绪检测
-        emotion, confidence, _ = await emotion_detector.detect(user_message, history)
+        # 2. 感知（工作流中跳过 LLM 情绪检测，避免重复调用）
+        if session_id in self._active_workflow:
+            emotion, confidence, _, action, method = "neutral", 0.5, "", "none", "none"
+        else:
+            emotion, confidence, _, action, method = await emotion_detector.detect(user_message, history)
         # 技能选择：非 neutral → 加载 emotion-guide
-        on_demand = ["情绪应对策略"] if emotion != "neutral" else []
+        on_demand = ["情绪应对策略"] if (emotion != "neutral" and confidence >= 0.8) else []
         selected_names = skill_manager.get_always_skills() + on_demand
 
         # 感知
@@ -49,9 +57,22 @@ class ChatOrchestrator:
                            history=len(history),
                            total=len(history) + 1)
 
-        # 3. 决策 + 执行
-        decision = await route_engine.decide(session_id, user_message, emotion, confidence)
-        agent = self._agents.get(decision.agent, self._agents["companion"])
+        # 3. 路由决策（已在工作流中则继续）
+        if session_id in self._active_workflow:
+            agent = self._agents["workflow"]
+            decision = None
+        else:
+            decision = await route_engine.decide(session_id, user_message, emotion, confidence, entry=entry, action=action, method=method)
+            if decision.agent != "companion":
+                await broker.trace("route.decision", session_id,
+                                   selected_agent=decision.agent, reason=decision.reason,
+                                   skip_qa=decision.skip_qa)
+                self._active_workflow.add(session_id)
+            agent = self._agents.get(decision.agent, self._agents["companion"])
+
+        kwargs = {}
+        if decision and decision.skip_qa:
+            kwargs["skip_qa"] = decision.skip_qa
 
         full_text = ""
         try:
@@ -59,10 +80,15 @@ class ChatOrchestrator:
                 user_message, history, session_id, broker,
                 selected_skills=selected_names,
                 emotion=emotion, confidence=confidence,
+                **kwargs,
             ):
                 full_text += chunk_text
                 yield _sse_event("sse.text_chunk",
                                  {"session_id": session_id, "content": chunk_text})
+
+            # 工作流结束后让会话回到自主Agent
+            if agent.agent_name == "workflow" and agent.is_closed(session_id):
+                self._active_workflow.discard(session_id)
         except Exception as e:
             yield _sse_event("sse.error",
                              {"session_id": session_id, "error": "PROCESSING_ERROR", "message": str(e)})

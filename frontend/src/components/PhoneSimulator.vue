@@ -16,7 +16,7 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{
-  send: [text: string];
+  send: [text: string, entry?: string];
 }>();
 </script>
 
@@ -79,7 +79,7 @@ const emit = defineEmits<{
     />
 
     <!-- 输入区 -->
-    <ChatInput :is-loading="isLoading" @send="emit('send', $event)" />
+    <ChatInput :is-loading="isLoading" @send="(text, entry) => emit('send', text, entry)" />
   </div>
 </template>
 

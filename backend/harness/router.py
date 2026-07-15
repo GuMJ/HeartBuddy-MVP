@@ -1,32 +1,24 @@
-"""RouteEngine — 路由决策引擎（V1.1 情绪感知 + 引导判断）"""
+"""RouteEngine — V1.2 路由（LLM 意图已在 emotion_detector 中判断）"""
 
 from backend.shared.schemas import RouteDecision
 
 
 class RouteEngine:
-    """
-    路由引擎 — 根据用户消息和情绪状态决定 Agent 行为。
-
-    V1.1: 情绪感知 + 引导判断（不切换 Agent）
-    V1.2: 完整路由（状态机 + workflow 切换）
-    """
-
-    WORKFLOW_KEYWORDS = [
-        "紧张", "焦虑", "压力", "放松", "缓解", "深呼吸",
-        "睡不着", "心慌", "冥想", "冷静", "烦躁", "不安",
-        "恐慌", "担忧", "害怕", "崩溃",
-    ]
 
     async def decide(
-        self, session_id: str, message: str, emotion: str, confidence: float
+        self, session_id: str, message: str, emotion: str, confidence: float,
+        entry: str = "chat", action: str = "none", method: str = "none",
     ) -> RouteDecision:
-        """根据情绪和上下文做路由决策"""
-        matched = [kw for kw in self.WORKFLOW_KEYWORDS if kw in message]
-        return RouteDecision(
-            agent="companion",
-            matched_keywords=matched,
-            confidence=min(confidence, 1.0) if matched else 0.0,
-            reason="keyword_matched" if matched else "v1.0_fallback",
-        )
+        if entry == "button":
+            return RouteDecision(agent="workflow", reason="button_click")
+
+        if action != "none":
+            return RouteDecision(
+                agent="workflow", reason="llm_intent",
+                skip_qa=method if method != "none" else None,
+            )
+
+        return RouteDecision(agent="companion", reason="companion_default")
+
 
 route_engine = RouteEngine()

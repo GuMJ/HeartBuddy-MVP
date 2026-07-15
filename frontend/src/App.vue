@@ -48,7 +48,7 @@ const {
           :current-streaming="currentStreaming"
           :is-loading="isLoading"
           :error="error"
-          @send="send"
+          @send="(text, entry) => send(text, entry)"
         />
       </div>
       <div class="panel">

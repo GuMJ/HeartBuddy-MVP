@@ -20,6 +20,7 @@ export function useSSE() {
   async function connect(
     sessionId: string,
     message: string,
+    entry: string,
     callbacks: SSECallbacks
   ): Promise<void> {
     // 取消之前的请求
@@ -32,7 +33,7 @@ export function useSSE() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: sessionId, message }),
+        body: JSON.stringify({ session_id: sessionId, message, entry }),
         signal: abortController.signal,
       });
 

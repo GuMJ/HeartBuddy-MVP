@@ -32,6 +32,7 @@ const PHASE_COLORS: Record<TracePhase, string> = {
   act: "#f97316",
   observe: "#10b981",
   output: "#16a34a",
+  judge: "#8b5cf6",
 };
 
 // ---- 事件 → 可读标签 ----
@@ -44,6 +45,8 @@ const TYPE_LABELS: Record<string, string> = {
   "route.decision": "路由",
   "agent.active": "激活",
   "agent.plan": "计划",
+  "workflow.state_change": "状态",
+  "workflow.intent_raw": "判断",
   "agent.action": "行动",
   "llm.request": "LLM",
   "agent.observe": "结果",
@@ -135,6 +138,15 @@ function formatPlan(d: Record<string, unknown>): string {
   return lines.join("\n");
 }
 
+function toPhase(phase: string, method: string | null): string {
+  const labels: Record<string, string> = {
+    entering: "进入", assessing: "信息采集", matching: "方案匹配",
+    presenting: "方案呈现", executing: "逐步执行", following_up: "出口过渡", closed: "结束",
+  };
+  const label = labels[phase] || phase;
+  return method ? `${label}（${method}）` : label;
+}
+
 function formatContext(d: Record<string, unknown>): string {
   const h = d.history as number ?? 0;
   const t = d.total as number ?? h + 1;
@@ -151,9 +163,9 @@ function formatSummary(trace: TraceEvent): string {
     case "emotion.detected":
       return `${d.emotion}  conf=${d.confidence}`;
     case "route.decision":
-      return `${d.selected_agent}  ${d.reason}`;
-    case "agent.active":
-      return `${d.agent_name}  ${d.reason}`;
+      return "进入工作流（缓解紧张）";
+    case "workflow.state_change":
+      return toPhase(d.phase as string, d.method as string);
     case "agent.plan":
       return formatPlan(d);
     case "llm.request":

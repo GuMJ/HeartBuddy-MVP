@@ -2,7 +2,7 @@
 import { ref, nextTick } from "vue";
 
 const emit = defineEmits<{
-  send: [text: string];
+  send: [text: string, entry?: string];
 }>();
 
 defineProps<{
@@ -45,6 +45,10 @@ function handleKeydown(event: KeyboardEvent) {
 }
 
 function selectTool(label: string) {
+  if (label === "缓解紧张") {
+    emit("send", "缓解紧张", "button");
+    return;
+  }
   inputText.value = `我想${label}`;
   autoGrow();
   textareaRef.value?.focus();

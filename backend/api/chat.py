@@ -31,7 +31,7 @@ async def chat(req: ChatRequest):
     async def event_stream():
         try:
             async for sse_event in orchestrator.handle_chat(
-                req.session_id, req.message
+                req.session_id, req.message, entry=req.entry
             ):
                 yield sse_event
         except Exception as e:
